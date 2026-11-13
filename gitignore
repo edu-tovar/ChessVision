@@ -1,0 +1,38 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# --- Entornos virtuales ---
+entorno/
+venv/
+env/
+
+# --- IDEs y sistema ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Datos (no se suben; se comparten por Drive) ---
+data/*
+!data/.gitkeep
+
+# --- Modelos: se sube el .onnx final, no los checkpoints ---
+models/*.pt
+models/*.pth
+models/*.ckpt
+
+# --- Salidas de entrenamiento ---
+training/runs/
+training/checkpoints/
+training/logs/
+
+# --- Vídeos y grabaciones ---
+*.mp4
+*.avi
+*.mov
