@@ -5,9 +5,10 @@ __pycache__/
 .pytest_cache/
 
 # --- Entornos virtuales ---
-entorno/
+.venv/
 venv/
 env/
+entorno/
 
 # --- IDEs y sistema ---
 .vscode/
