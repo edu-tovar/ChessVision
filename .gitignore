@@ -37,3 +37,6 @@ training/logs/
 *.mp4
 *.avi
 *.mov
+
+# --- Documentación (no se sube) ---
+docs/
