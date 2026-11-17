@@ -1,4 +1,4 @@
-"""Captura de vídeo y corrección de la distorsión con los parámetros de calibración."""
+"""Video capture and lens distortion correction using the calibration parameters."""
 from __future__ import annotations
 
 import sys
@@ -10,29 +10,29 @@ import numpy as np
 from chessvision import config
 
 
-# --- Captura ---------------------------------------------------------------
+# --- Capture ---------------------------------------------------------------
 def open_camera(index: int = config.CAMERA_INDEX,
                 width: int = config.FRAME_WIDTH,
                 height: int = config.FRAME_HEIGHT) -> cv2.VideoCapture:
-    """Abre la cámara y fija la resolución. Lanza un error si no se puede abrir."""
+    """Open the camera and set its resolution. Raises an error if it cannot be opened."""
     backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
     cap = cv2.VideoCapture(index, backend)
     if not cap.isOpened():
-        raise RuntimeError(f"No se pudo abrir la cámara {index}. "
-                           "¿Está Camo abierto en el PC y el móvil conectado?")
+        raise RuntimeError(f"Could not open camera {index}. "
+                           "Is Camo running on the PC and the phone connected?")
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
     real = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     if real != (width, height):
-        print(f"[camera] Aviso: se pidió {width}x{height} pero la cámara da {real[0]}x{real[1]}. "
-              "Revisa la resolución en Camo.")
+        print(f"[camera] Warning: requested {width}x{height} but the camera gives "
+              f"{real[0]}x{real[1]}. Check the resolution in Camo.")
     return cap
 
 
-# --- Lectura/escritura de imágenes -------------------------------------------
-# cv2.imread/cv2.imwrite fallan en Windows si la ruta tiene caracteres no ASCII
-# (p. ej. "3º"). Estas versiones pasan por NumPy y funcionan con cualquier ruta.
+# --- Image read/write --------------------------------------------------------
+# cv2.imread/cv2.imwrite fail on Windows when the path has non-ASCII characters
+# (e.g. "3º"). These versions go through NumPy and work with any path.
 def read_image(path: Path) -> np.ndarray | None:
     data = np.fromfile(str(path), dtype=np.uint8)
     return cv2.imdecode(data, cv2.IMREAD_COLOR) if data.size else None
@@ -43,11 +43,11 @@ def write_image(path: Path, img: np.ndarray) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     ok, buf = cv2.imencode(path.suffix or ".jpg", img)
     if not ok:
-        raise IOError(f"No se pudo codificar la imagen {path}")
+        raise IOError(f"Could not encode image {path}")
     buf.tofile(str(path))
 
 
-# --- Parámetros de calibración ---------------------------------------------
+# --- Calibration parameters --------------------------------------------------
 def save_calibration(path: Path, K: np.ndarray, dist: np.ndarray, rms: float,
                      image_size: tuple[int, int], **extra) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -56,20 +56,20 @@ def save_calibration(path: Path, K: np.ndarray, dist: np.ndarray, rms: float,
 
 def load_calibration(path: Path = config.CALIB_FILE) -> dict:
     if not path.exists():
-        raise FileNotFoundError(f"No existe {path}. Ejecuta antes: python scripts/calibrate.py")
+        raise FileNotFoundError(f"{path} does not exist. Run first: python scripts/calibrate.py calibrate")
     with np.load(path) as data:
         return {k: data[k] for k in data.files}
 
 
-# --- Corrección de la distorsión -------------------------------------------
+# --- Distortion correction ---------------------------------------------------
 class Undistorter:
-    """Corrige la distorsión con mapas precalculados (initUndistortRectifyMap + remap).
+    """Corrects distortion with precomputed maps (initUndistortRectifyMap + remap).
 
-    Los mapas se calculan una sola vez; en cada frame solo se hace un remap,
-    que es barato y no penaliza los FPS.
+    The maps are computed only once; each frame only needs a remap,
+    which is cheap and does not hurt the FPS.
 
-    alpha = 0 -> recorta para que no queden bordes negros (recomendado).
-    alpha = 1 -> conserva todos los píxeles originales (aparecen bordes negros).
+    alpha = 0 -> crops so that no black borders remain (recommended).
+    alpha = 1 -> keeps every original pixel (black borders appear).
     """
 
     def __init__(self, K: np.ndarray, dist: np.ndarray, image_size: tuple[int, int],
@@ -89,6 +89,6 @@ class Undistorter:
     def __call__(self, frame: np.ndarray) -> np.ndarray:
         size = (frame.shape[1], frame.shape[0])
         if size != self.image_size:
-            raise ValueError(f"El frame es {size[0]}x{size[1]} pero la calibración se hizo a "
-                             f"{self.image_size[0]}x{self.image_size[1]}. Usa la misma resolución.")
+            raise ValueError(f"The frame is {size[0]}x{size[1]} but the calibration was done at "
+                             f"{self.image_size[0]}x{self.image_size[1]}. Use the same resolution.")
         return cv2.remap(frame, self.map1, self.map2, cv2.INTER_LINEAR)
