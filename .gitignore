@@ -22,6 +22,10 @@ Thumbs.db
 # --- Datos (no se suben; se comparten por Drive) ---
 data/*
 !data/.gitkeep
+# Se sube la calibración de la cámara usada.
+!data/calibration/
+data/calibration/*
+!data/calibration/calibration.npz
 
 # --- Modelos: se sube el .onnx final, no los checkpoints ---
 models/*.pt
