@@ -23,3 +23,17 @@ FRAME_HEIGHT = 720
 # The standard OpenCV pattern (10x7 squares) has 9x6 inner corners.
 CHESSBOARD_SHAPE = (9, 6)
 SQUARE_SIZE_MM = 24.0        # measured side of a square on the PRINTED pattern
+
+# --- Security: piece recognition with SIFT -------------------------------
+SECURITY_DIR = DATA_DIR / "security"          # reference photos: <set>/<piece>/NNN.jpg
+PIECE_TYPES = ("pawn", "knight", "bishop", "rook", "queen", "king")
+SECURITY_ROI = (440, 160, 400, 400)           # (x, y, w, h) in the undistorted frame
+SIFT_RATIO = 0.75            # Lowe's ratio test
+SIFT_MIN_MATCHES = 6         # good matches needed before running RANSAC
+SIFT_MIN_INLIERS = 6         # RANSAC inliers needed to accept a piece type
+SIFT_SCALE_RANGE = (0.5, 2.0)  # plausible query/reference scale (pieces shown at a similar distance)
+# Colour mask: SIFT only looks at the (light, yellowish) piece, never at the hand or the wall.
+# OpenCV HSV ranges: H 0-180, S 0-255, V 0-255. Skin is H 0-10, the light pieces H 18-24.
+PIECE_HSV_LOW = (14, 50, 40)
+PIECE_HSV_HIGH = (35, 255, 255)
+PIECE_MASK_DILATE = 15       # px added around the piece so that contour keypoints are kept
