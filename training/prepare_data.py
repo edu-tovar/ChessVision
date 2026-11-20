@@ -21,7 +21,7 @@ from tqdm import tqdm
 from config import (CHESSRED_DIR, CLASSES, CROP_HEIGHT_SQUARES, DATA_DIR,
                     EMPTY_KEEP_RATIO, MIN_PERSPECTIVE_RATIO, NUM_WORKERS, SEED,
                     WARP_SQUARE_PX)
-from geometry import crop_squares, perspective_ratio
+from chessvision.board.geometry import crop_squares, perspective_ratio
 
 # Esquinas de ChessReD (vista de las blancas) -> casilla
 CORNER_NAMES = {"bottom_left": "a1", "bottom_right": "h1",

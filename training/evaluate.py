@@ -22,7 +22,7 @@ from tqdm import tqdm
 from config import CLASSES, DATA_DIR, MODELS_DIR, NUM_WORKERS, REAL_TEST_DIR, RUNS_DIR
 from dataset import PiecesDataset
 from model import build_model
-from train import get_device
+from training import get_device
 
 
 def load_model(ckpt_path: Path, device):
