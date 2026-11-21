@@ -4,9 +4,15 @@ Pipeline for a query image (the ROI where the user shows a piece):
     colour mask -> SIFT keypoints -> FLANN matching against every reference image
     -> Lowe's ratio test -> RANSAC geometric verification -> vote per piece type.
 
-The colour mask keeps only the light (yellowish) piece plus a thin border for its
-contour. Without it the hand and its shadow, present in almost every reference photo,
-match the hand of an empty ROI and produce false positives.
+The colour mask keeps only the light (yellowish) piece: the hand and its shadow,
+present in almost every reference photo, would otherwise match the hand of an empty ROI.
+
+What SIFT looks at (`features` mode):
+    "silhouette"  the binary mask of the piece (pure shape). Default: pieces have almost
+                  no texture, and their shading changes with the light, but the outline
+                  of each type does not.
+    "texture"     the grey image inside the (dilated) mask. Fails when the light changes.
+    "raw"         the grey image of the whole ROI (no mask). Baseline.
 
 The geometric model is a similarity (rotation + scale + translation,
 cv2.estimateAffinePartial2D) instead of a homography: a piece is a 3D object,
@@ -21,6 +27,8 @@ import numpy as np
 
 from chessvision import config
 
+FEATURE_MODES = ("silhouette", "texture", "raw")
+
 
 @dataclass
 class Reference:
@@ -34,30 +42,37 @@ class PieceMatcher:
     def __init__(self, ratio: float = config.SIFT_RATIO,
                  min_matches: int = config.SIFT_MIN_MATCHES,
                  min_inliers: int = config.SIFT_MIN_INLIERS,
-                 use_clahe: bool = True, use_mask: bool = True):
+                 features: str = config.SIFT_FEATURES):
+        if features not in FEATURE_MODES:
+            raise ValueError(f"features must be one of {FEATURE_MODES}, got '{features}'")
         self.sift = cv2.SIFT_create()
-        self.clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)) if use_clahe else None
+        self.clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         self.ratio, self.min_matches, self.min_inliers = ratio, min_matches, min_inliers
-        self.use_mask = use_mask
+        self.mode = features
         self.refs: list[Reference] = []
 
     # --- Features ---------------------------------------------------------
-    def piece_mask(self, img: np.ndarray) -> np.ndarray | None:
-        """Binary mask of the piece (pixels inside the HSV range, dilated). None = whole image."""
-        if not self.use_mask or img.ndim != 3:
-            return None
+    @staticmethod
+    def piece_core(img: np.ndarray) -> np.ndarray:
+        """Binary mask of the piece: pixels inside the HSV range, without specks."""
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, config.PIECE_HSV_LOW, config.PIECE_HSV_HIGH)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))   # remove specks
+        return cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+
+    def piece_mask(self, img: np.ndarray) -> np.ndarray | None:
+        """Area where SIFT looks (also used to display it). None = whole image."""
+        if self.mode == "raw":
+            return None
         d = config.PIECE_MASK_DILATE
-        return cv2.dilate(mask, np.ones((d, d), np.uint8))
+        return cv2.dilate(self.piece_core(img), np.ones((d, d), np.uint8))
 
     def features(self, img: np.ndarray):
-        """SIFT keypoints and descriptors inside the piece mask.
-        CLAHE boosts the little texture pieces have."""
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if img.ndim == 3 else img
-        if self.clahe is not None:
-            gray = self.clahe.apply(gray)
+        """SIFT keypoints and descriptors of a BGR image, according to the mode."""
+        if self.mode == "silhouette":
+            # Slight blur: SIFT needs gradients, a hard 0/255 edge is aliased
+            sil = cv2.GaussianBlur(self.piece_core(img), (5, 5), 0)
+            return self.sift.detectAndCompute(sil, None)
+        gray = self.clahe.apply(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))   # CLAHE boosts texture
         return self.sift.detectAndCompute(gray, self.piece_mask(img))
 
     # --- References -------------------------------------------------------

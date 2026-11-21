@@ -1,11 +1,13 @@
-"""Feasibility test: can SIFT tell the 6 chess piece types apart inside a fixed ROI?
+"""Security system tool: reference photos, evaluation and live test of the SIFT piece recognition.
 
-Usage (from the repository root):
-    python scripts/sift_feasibility.py capture --set standing   # take photos of each piece in the ROI
-    python scripts/sift_feasibility.py evaluate --set standing  # offline accuracy + confusion matrix
-    python scripts/sift_feasibility.py live --set standing      # real-time recognition with FPS
-Add --no-mask to any command to use the whole ROI instead of the colour mask of the piece
-(the area outside the mask is shown darkened).
+Usage (from the repository root; --set defaults to the reference set in config.py):
+    python scripts/security.py capture                     # take photos of each piece in the ROI
+    python scripts/security.py capture --set upright_test  # ... into another set (e.g. a test set)
+    python scripts/security.py evaluate                    # leave-one-out accuracy + confusion matrix
+    python scripts/security.py evaluate --test upright_test  # accuracy on an independent test set
+    python scripts/security.py live                        # real-time recognition with FPS
+Add --features {silhouette,texture,raw} to any command to choose what SIFT looks at
+(default in config.py; the area outside the piece mask is shown darkened).
 
 Capture keys:  P N B R Q K = pawn knight bishop rook queen king | X = empty ROI (no piece) | ESC = quit
 Photos are saved as data/security/<set>/<piece>/NNN.jpg (only the ROI crop).
@@ -23,7 +25,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from chessvision import config                                       # noqa: E402
 from chessvision.camera import Undistorter, open_camera, read_image, write_image  # noqa: E402
-from chessvision.security.piece_matcher import PieceMatcher             # noqa: E402
+from chessvision.security.piece_matcher import FEATURE_MODES, PieceMatcher  # noqa: E402
 
 KEYS = {ord("p"): "pawn", ord("n"): "knight", ord("b"): "bishop", ord("r"): "rook",
         ord("q"): "queen", ord("k"): "king", ord("x"): "none"}
@@ -70,8 +72,8 @@ def load_set(set_dir: Path) -> list[tuple[str, Path, np.ndarray]]:
     return data
 
 
-def build_matcher(data, use_mask: bool = True) -> PieceMatcher:
-    matcher = PieceMatcher(use_mask=use_mask)
+def build_matcher(data, features: str = config.SIFT_FEATURES) -> PieceMatcher:
+    matcher = PieceMatcher(features=features)
     for i, (label, _, img) in enumerate(data):
         if label != "none":
             matcher.add_reference(label, img, ref_id=i)
@@ -82,7 +84,7 @@ def build_matcher(data, use_mask: bool = True) -> PieceMatcher:
 def capture(args) -> None:
     set_dir = config.SECURITY_DIR / args.set
     undistort = get_undistorter()
-    sift = PieceMatcher(use_mask=not args.no_mask)   # only used to show live keypoints
+    sift = PieceMatcher(features=args.features)   # only used to show live keypoints
     cap = open_camera()
     print(__doc__.split("Capture keys:")[1].split("Photos")[0].strip())
 
@@ -99,7 +101,7 @@ def capture(args) -> None:
         draw_roi(view)
         cv2.putText(view, f"Keypoints in ROI: {len(kp)}", (15, 35),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-        cv2.imshow("SIFT feasibility - capture", view)
+        cv2.imshow("Security - capture", view)
 
         key = cv2.waitKey(1) & 0xFF
         if key == 27:
@@ -128,8 +130,8 @@ def evaluate(args) -> None:
     if not ref_data or not test_data:
         sys.exit("No photos found. Run 'capture' first.")
 
-    matcher = build_matcher(ref_data, use_mask=not args.no_mask)
-    print(f"Mode: {mode} | colour mask {'off' if args.no_mask else 'on'} | "
+    matcher = build_matcher(ref_data, args.features)
+    print(f"Mode: {mode} | features '{args.features}' | "
           f"{len(matcher.refs)} reference images | {len(test_data)} test images\n")
 
     # Votes are computed once; the decision threshold is swept afterwards
@@ -196,7 +198,7 @@ def live(args) -> None:
     data = load_set(config.SECURITY_DIR / args.set)
     if not data:
         sys.exit("No photos found. Run 'capture' first.")
-    matcher = build_matcher(data, use_mask=not args.no_mask)
+    matcher = build_matcher(data, args.features)
     undistort = get_undistorter()
     cap = open_camera()
     prev = time.perf_counter()
@@ -219,7 +221,7 @@ def live(args) -> None:
         for j, (name, v) in enumerate(sorted(votes.items(), key=lambda t: -t[1])):
             cv2.putText(view, f"{name}: {v}", (15, 75 + 30 * j),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-        cv2.imshow("SIFT feasibility - live", view)
+        cv2.imshow("Security - live", view)
         if cv2.waitKey(1) & 0xFF == 27:
             break
 
@@ -236,9 +238,11 @@ def main() -> None:
                              ("evaluate", evaluate, "offline accuracy and confusion matrix"),
                              ("live", live, "real-time recognition")):
         p = sub.add_parser(name, help=text)
-        p.add_argument("--set", default="default", help="name of the photo set (subfolder)")
-        p.add_argument("--no-mask", action="store_true",
-                       help="use the whole ROI instead of the colour mask of the piece")
+        p.add_argument("--set", default=config.SECURITY_REFERENCE_SET,
+                       help="photo set (subfolder of data/security); the reference set for evaluate/live")
+        p.add_argument("--features", choices=FEATURE_MODES, default=config.SIFT_FEATURES,
+                       help="silhouette = binary mask of the piece, texture = grey image inside "
+                            "the mask, raw = grey image of the whole ROI")
         if name == "evaluate":
             p.add_argument("--test", help="independent test set (otherwise leave-one-out)")
         p.set_defaults(func=func)
