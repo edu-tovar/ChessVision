@@ -26,6 +26,11 @@ data/*
 !data/calibration/
 data/calibration/*
 !data/calibration/calibration.npz
+# SIFT reference photos (they are the security model) and its test set.
+!data/security/
+data/security/*
+!data/security/upright/
+!data/security/upright_test/
 
 # --- Modelos: se sube el .onnx final, no los checkpoints ---
 models/*.pt
