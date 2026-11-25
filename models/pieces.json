@@ -1,0 +1,49 @@
+{
+  "model_name": "mobilenet_v3_small",
+  "epoch": 25,
+  "val_metrics": {
+    "loss": 0.6035168468952179,
+    "acc": 0.978515625,
+    "bal_acc": 0.9070478677749634
+  },
+  "onnx": "pieces.onnx",
+  "opset": 17,
+  "input_name": "input",
+  "output_name": "logits",
+  "classes": [
+    "empty",
+    "white_pawn",
+    "white_knight",
+    "white_bishop",
+    "white_rook",
+    "white_queen",
+    "white_king",
+    "black_pawn",
+    "black_knight",
+    "black_bishop",
+    "black_rook",
+    "black_queen",
+    "black_king"
+  ],
+  "input_size": {
+    "width": 64,
+    "height": 128
+  },
+  "color_order": "RGB",
+  "scale": 0.00392156862745098,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
+  ],
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "crop": {
+    "square_px": 64,
+    "height_squares": 2
+  },
+  "preprocess": "BGR->RGB, resize a input_size, x/255, (x-mean)/std, NCHW float32"
+}
