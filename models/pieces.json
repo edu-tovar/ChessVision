@@ -1,10 +1,10 @@
 {
   "model_name": "mobilenet_v3_small",
-  "epoch": 25,
+  "epoch": 22,
   "val_metrics": {
-    "loss": 0.6035168468952179,
-    "acc": 0.978515625,
-    "bal_acc": 0.9070478677749634
+    "loss": 0.5500811586777369,
+    "acc": 0.9973958333333334,
+    "bal_acc": 0.9903846383094788
   },
   "onnx": "pieces.onnx",
   "opset": 17,
