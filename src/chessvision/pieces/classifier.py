@@ -20,7 +20,7 @@ class PieceClassifier:
         onnx_path = Path(onnx_path)
         json_path = Path(json_path) if json_path else onnx_path.with_suffix(".json")
         self.meta = json.loads(json_path.read_text(encoding="utf-8"))
-        self.net = cv2.dnn.readNetFromONNX(str(onnx_path))
+        self.net = cv2.dnn.readNetFromONNX(np.fromfile(str(onnx_path), dtype=np.uint8))
         self.classes = self.meta["classes"]
         self.w = self.meta["input_size"]["width"]
         self.h = self.meta["input_size"]["height"]
