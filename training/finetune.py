@@ -29,7 +29,7 @@ from config import (BATCH_SIZE, CLASSES, DATA_DIR, INPUT_H, INPUT_W, MODELS_DIR,
 from dataset import PiecesDataset
 from model import build_model
  
-OWN_DATA_DIR = ROOT / "data" / "pieces_own"
+OWN_DATA_DIR = ROOT / "data" / "pieces_cenital"
  
  
 def get_device() -> torch.device:

@@ -30,8 +30,8 @@ import numpy as np
 from chessvision.board.geometry import crop_squares
 from config import CLASSES, CROP_HEIGHT_SQUARES, REAL_TEST_DIR, ROOT, SEED, WARP_SQUARE_PX
  
-OWN_PHOTOS_DIR = ROOT / "data" / "own_photos"
-OWN_DATA_DIR = ROOT / "data" / "pieces_own"
+OWN_PHOTOS_DIR = ROOT / "data" / "cenital_photos"
+OWN_DATA_DIR = ROOT / "data" / "pieces_cenital"
  
 FEN_TO_CLASS = {"P": "white_pawn", "N": "white_knight", "B": "white_bishop",
                 "R": "white_rook", "Q": "white_queen", "K": "white_king",
