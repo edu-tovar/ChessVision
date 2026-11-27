@@ -24,6 +24,11 @@ FRAME_HEIGHT = 720
 CHESSBOARD_SHAPE = (9, 6)
 SQUARE_SIZE_MM = 24.0        # measured side of a square on the PRINTED pattern
 
+# --- Board corners (board/corners.py) ------------------------------------
+# Selected once with the mouse (fixed stand) and reused. Not uploaded: it depends on the set-up.
+BOARD_CORNERS_FILE = DATA_DIR / "board" / "corners.json"
+BOARD_MIN_MATCH = 56          # squares (of 64) the CNN must match with the known position to trust the orientation
+
 # --- Security: piece recognition with SIFT -------------------------------
 SECURITY_DIR = DATA_DIR / "security"          # reference photos: <set>/<piece>/NNN.jpg
 SECURITY_REFERENCE_SET = "upright"            # set used as references by the app and scripts/security.py
