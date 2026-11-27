@@ -48,6 +48,11 @@ SETTLE_DIFF_THRESHOLD = 25    # grey-level change between frames that counts as 
 SETTLE_MAX_MOTION_PX = 300    # moving pixels allowed in a "still" frame
 SETTLE_FRAMES = 10            # still frames after the hand leaves -> "settled" (read the board)
 
+# --- Move detection (moves/detector.py) -----------------------------------
+MOVE_DIFF_THRESHOLD = 30          # grey-level change (blurred) that counts as a changed pixel
+MOVE_MIN_CHANGED_FRACTION = 0.15  # share of a square's pixels that must change to re-read it
+MOVE_AVG_FRAMES = 3               # still frames averaged by the CNN after "settled"
+
 # --- Security: piece recognition with SIFT -------------------------------
 SECURITY_DIR = DATA_DIR / "security"          # reference photos: <set>/<piece>/NNN.jpg
 SECURITY_REFERENCE_SET = "upright"            # set used as references by the app and scripts/security.py

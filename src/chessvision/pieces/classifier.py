@@ -53,9 +53,12 @@ class PieceClassifier:
 
         Devuelve {casilla: (clase, confianza)} para las 64 casillas.
         """
+        probs = self.board_probs(frame_bgr, corners)
+        return {n: (self.classes[int(p.argmax())], float(p.max())) for n, p in probs.items()}
+
+    def board_probs(self, frame_bgr: np.ndarray, corners: dict) -> dict[str, np.ndarray]:
+        """Full probabilities {square: [13]} (order of self.classes) for the 64 squares."""
         crops = self.crops(frame_bgr, corners)
         names = list(crops)
         probs = self.predict([crops[n] for n in names])
-        idx = probs.argmax(1)
-        return {n: (self.classes[i], float(probs[k, i]))
-                for k, (n, i) in enumerate(zip(names, idx))}
+        return dict(zip(names, probs))
