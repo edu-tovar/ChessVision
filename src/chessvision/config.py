@@ -25,9 +25,28 @@ CHESSBOARD_SHAPE = (9, 6)
 SQUARE_SIZE_MM = 24.0        # measured side of a square on the PRINTED pattern
 
 # --- Board corners (board/corners.py) ------------------------------------
-# Selected once with the mouse (fixed stand) and reused. Not uploaded: it depends on the set-up.
+# Clicked once in the order a1, h1, h8, a8 (fixed stand) and reused. Not uploaded: it depends on the set-up.
 BOARD_CORNERS_FILE = DATA_DIR / "board" / "corners.json"
-BOARD_MIN_MATCH = 56          # squares (of 64) the CNN must match with the known position to trust the orientation
+
+# --- Hand tracker (tracker/hand.py) ---------------------------------------
+# Areas in px at 1280x720 with the overhead stand (a board of ~600 px -> square of ~75 px).
+HAND_BOARD_MARGIN = 1.0       # squares added around the board where the arm is also analysed
+MOG2_HISTORY = 300
+MOG2_VAR_THRESHOLD = 32       # higher = less sensitive (fewer false foreground pixels)
+MOG2_LEARNING_RATE = 0.002    # background adaptation while nobody touches the board (light changes)
+MOG2_WARMUP_FRAMES = 30       # first frames learn quickly (board must be empty of hands)
+HAND_OPEN_K = 5               # morphology kernels (px)
+HAND_CLOSE_K = 15
+HAND_MIN_AREA = 3000          # largest blob below this is not a hand (a piece is ~1500-3000 px)
+HAND_MIN_AREA_INSIDE = 800    # part of it that must be inside the board itself
+HAND_ON_FRAMES = 3            # consecutive frames with hand -> "hand_in"
+HAND_OFF_FRAMES = 5           # consecutive frames without hand -> "hand_out"
+HAND_MAX_MISSED = 5           # frames the Kalman filter coasts without measurements
+KALMAN_PROCESS_NOISE = 1.0
+KALMAN_MEASUREMENT_NOISE = 25.0   # (px)^2: centroid jitter
+SETTLE_DIFF_THRESHOLD = 25    # grey-level change between frames that counts as motion
+SETTLE_MAX_MOTION_PX = 300    # moving pixels allowed in a "still" frame
+SETTLE_FRAMES = 10            # still frames after the hand leaves -> "settled" (read the board)
 
 # --- Security: piece recognition with SIFT -------------------------------
 SECURITY_DIR = DATA_DIR / "security"          # reference photos: <set>/<piece>/NNN.jpg
